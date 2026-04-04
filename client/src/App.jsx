@@ -4,6 +4,7 @@ import Sidebar from "./components/layouts/Sidebar";
 import Navbar from "./components/layouts/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Transaksi from "./pages/Transaksi";
+import Kategori from "./pages/Kategori";
 
 // Placeholder pages — ganti dengan komponen halaman kamu
 const Page = ({ title }) => (
@@ -17,7 +18,7 @@ function AppLayout() {
 	const [collapsed, setCollapsed] = useState(false);
 
 	return (
-		<div className="flex h-screen bg-[#080C14] overflow-hidden">
+		<div className="flex h-screen bg-navy-950 overflow-hidden">
 			<Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
 			<div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 				<Navbar />
@@ -37,7 +38,7 @@ export default function App() {
 				<Route element={<AppLayout />}>
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/transaksi" element={<Transaksi />} />
-					<Route path="/kategori" element={<Page title="Kategori" />} />
+					<Route path="/kategori" element={<Kategori />} />
 					<Route path="/laporan" element={<Page title="Laporan" />} />
 					<Route path="/filter" element={<Page title="Filter & Ekspor" />} />
 					<Route path="/pengaturan" element={<Page title="Pengaturan" />} />
