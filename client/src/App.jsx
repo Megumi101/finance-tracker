@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Sidebar from "./components/layouts/Sidebar";
 import Navbar from "./components/layouts/Navbar";
 import Dashboard from "./pages/Dashboard";
+import Transaksi from "./pages/Transaksi";
 
 // Placeholder pages — ganti dengan komponen halaman kamu
 const Page = ({ title }) => (
@@ -35,7 +36,7 @@ export default function App() {
 				{/* Halaman dengan Sidebar + Navbar */}
 				<Route element={<AppLayout />}>
 					<Route path="/" element={<Dashboard />} />
-					<Route path="/transaksi" element={<Page title="Transaksi" />} />
+					<Route path="/transaksi" element={<Transaksi />} />
 					<Route path="/kategori" element={<Page title="Kategori" />} />
 					<Route path="/laporan" element={<Page title="Laporan" />} />
 					<Route path="/filter" element={<Page title="Filter & Ekspor" />} />
