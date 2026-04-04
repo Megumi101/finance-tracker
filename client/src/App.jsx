@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import Transaksi from "./pages/Transaksi";
 import Kategori from "./pages/Kategori";
 import Laporan from "./pages/Laporan";
+import Login from "./features/auth/Login";
+import Register from "./features/auth/Register";
 
 // Placeholder pages — ganti dengan komponen halaman kamu
 const Page = ({ title }) => (
@@ -46,8 +48,8 @@ export default function App() {
 				</Route>
 
 				{/* Halaman tanpa Sidebar + Navbar (auth) */}
-				<Route path="/login" element={<Page title="Login" />} />
-				<Route path="/register" element={<Page title="Register" />} />
+				<Route path="/login" element={<Login title="Login" />} />
+				<Route path="/register" element={<Register title="Register" />} />
 			</Routes>
 		</BrowserRouter>
 	);
