@@ -171,21 +171,6 @@ export default function Sidebar({ collapsed, onToggle }) {
 				))}
 			</nav>
 
-			{/* ── Upgrade Card ── */}
-			{!collapsed && (
-				<div className="mt-auto mx-3 mb-5 p-4 rounded-xl bg-violet-600/10 border border-violet-500/20">
-					<p className="text-[12px] font-semibold text-violet-300 flex items-center gap-1.5">
-						<Icon name="bolt" /> Mode Pro
-					</p>
-					<p className="text-[11px] text-slate-400 mt-1 mb-3 leading-relaxed">
-						Akses laporan lengkap & AI Insight keuangan.
-					</p>
-					<button className="w-full bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-semibold py-1.5 px-3 rounded-lg transition-colors duration-200">
-						Upgrade Sekarang
-					</button>
-				</div>
-			)}
-
 			{/* ── Collapse Toggle ── */}
 			<button
 				onClick={onToggle}
