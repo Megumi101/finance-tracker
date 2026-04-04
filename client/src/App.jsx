@@ -5,6 +5,7 @@ import Navbar from "./components/layouts/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Transaksi from "./pages/Transaksi";
 import Kategori from "./pages/Kategori";
+import Laporan from "./pages/Laporan";
 
 // Placeholder pages — ganti dengan komponen halaman kamu
 const Page = ({ title }) => (
@@ -39,7 +40,7 @@ export default function App() {
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/transaksi" element={<Transaksi />} />
 					<Route path="/kategori" element={<Kategori />} />
-					<Route path="/laporan" element={<Page title="Laporan" />} />
+					<Route path="/laporan" element={<Laporan title="Laporan" />} />
 					<Route path="/filter" element={<Page title="Filter & Ekspor" />} />
 					<Route path="/pengaturan" element={<Page title="Pengaturan" />} />
 				</Route>
