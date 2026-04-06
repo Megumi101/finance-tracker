@@ -152,12 +152,53 @@ function exportPDF(data, periode) {
 	};
 }
 
+// ─── Helper: Build report data from transactions ────────────────────────────
+function buildRealLaporanData(transactions) {
+	const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+	
+	// Group transactions by month
+	const monthlyData = {};
+	
+	transactions.forEach(txn => {
+		const date = new Date(txn.tanggal);
+		const month = date.getMonth(); // 0-11
+		const year = date.getFullYear();
+		const key = `${year}-${month}`;
+		
+		if (!monthlyData[key]) {
+			monthlyData[key] = {
+				bulan: monthNames[month],
+				year: year,
+				month: month,
+				pemasukan: 0,
+				pengeluaran: 0,
+			};
+		}
+		
+		if (txn.tipe === 'masuk') {
+			monthlyData[key].pemasukan += txn.jumlah;
+		} else {
+			monthlyData[key].pengeluaran += txn.jumlah;
+		}
+	});
+	
+	// Convert to array and sort by year and month
+	const sorted = Object.values(monthlyData).sort((a, b) => {
+		if (a.year !== b.year) return a.year - b.year;
+		return a.month - b.month;
+	});
+	
+	// Use buildLaporanData to calculate tabungan and percentages
+	return buildLaporanData(sorted);
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function Laporan() {
 	const [periode, setPeriode] = useState("tahun-ini");
 	const [showExport, setShowExport] = useState(false);
 	const [transactions, setTransactions] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const [reportData, setReportData] = useState([]);
 
 	// ── Fetch transactions on mount ──
 	useEffect(() => {
@@ -165,17 +206,25 @@ export default function Laporan() {
 			try {
 				setLoading(true);
 				const response = await transaksiApi.getAll();
-				setTransactions(response.data || []);
+				const txnData = response.data || [];
+				setTransactions(txnData);
+				
+				// Build real report data
+				const realData = buildRealLaporanData(txnData);
+				setReportData(realData);
 			} catch (err) {
 				console.error("Failed to fetch transactions:", err);
+				// Fallback to dummy data
+				setReportData(buildLaporanData(laporanBulanan));
 			} finally {
 				setLoading(false);
 			}
 		};
 		fetchTransactions();
 	}, []);
+	
 	// Build & filter data
-	const allData = useMemo(() => buildLaporanData(laporanBulanan), []);
+	const allData = useMemo(() => reportData, [reportData]);
 	const filteredData = useMemo(
 		() => filterByPeriode(allData, periode),
 		[allData, periode],
@@ -189,61 +238,79 @@ export default function Laporan() {
 
 	return (
 		<div className="flex flex-col gap-5">
-			{/* ── Top bar ── */}
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="text-[20px] font-bold text-slate-100 tracking-tight">
-						Laporan Keuangan
-					</h1>
-					<p className="text-[12px] text-slate-500 mt-0.5">
-						{periodeLabel[periode]} · {filteredData.length} bulan data
-					</p>
-				</div>
-				<div className="flex items-center gap-3">
-					<PeriodeSelector value={periode} onChange={(v) => setPeriode(v)} />
-
-					{/* Export dropdown */}
-					<div className="relative">
-						<button
-							onClick={() => setShowExport((e) => !e)}
-							className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] text-slate-400 border border-white/[0.07] hover:text-slate-200 hover:bg-white/[0.04] transition-all duration-200"
-						>
-							<DownloadIcon /> Ekspor ▾
-						</button>
-						{showExport && (
-							<div className="absolute right-0 top-full mt-2 w-44 bg-[#111827] border border-white/[0.08] rounded-xl shadow-2xl py-1.5 z-10">
-								<button
-									onClick={() => {
-										exportCSV(filteredData, periode);
-										setShowExport(false);
-									}}
-									className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
-								>
-									📄 Export CSV
-								</button>
-								<button
-									onClick={() => {
-										exportPDF(filteredData, periode);
-										setShowExport(false);
-									}}
-									className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
-								>
-									🖨️ Export PDF
-								</button>
-							</div>
-						)}
+			{loading ? (
+				<div className="flex items-center justify-center py-12">
+					<div className="text-center">
+						<div className="text-slate-400 mb-3">Loading laporan...</div>
+						<div className="animate-spin w-6 h-6 border-2 border-slate-600 border-t-violet-500 rounded-full mx-auto"></div>
 					</div>
 				</div>
-			</div>
+			) : filteredData.length === 0 ? (
+				<div className="flex items-center justify-center py-12">
+					<div className="text-center">
+						<p className="text-slate-400">Belum ada data transaksi</p>
+						<p className="text-slate-600 text-sm mt-1">Mulai catat transaksi untuk melihat laporan</p>
+					</div>
+				</div>
+			) : (
+				<>
+					{/* ── Top bar ── */}
+					<div className="flex items-center justify-between">
+						<div>
+							<h1 className="text-[20px] font-bold text-slate-100 tracking-tight">
+								Laporan Keuangan
+							</h1>
+							<p className="text-[12px] text-slate-500 mt-0.5">
+								{periodeLabel[periode]} · {filteredData.length} bulan data
+							</p>
+						</div>
+						<div className="flex items-center gap-3">
+							<PeriodeSelector value={periode} onChange={(v) => setPeriode(v)} />
 
-			{/* ── Summary cards ── */}
-			<SummaryCards data={filteredData} />
+							{/* Export dropdown */}
+							<div className="relative">
+								<button
+									onClick={() => setShowExport((e) => !e)}
+									className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] text-slate-400 border border-white/[0.07] hover:text-slate-200 hover:bg-white/[0.04] transition-all duration-200"
+								>
+									<DownloadIcon /> Ekspor ▾
+								</button>
+								{showExport && (
+									<div className="absolute right-0 top-full mt-2 w-44 bg-[#111827] border border-white/[0.08] rounded-xl shadow-2xl py-1.5 z-10">
+										<button
+											onClick={() => {
+												exportCSV(filteredData, periode);
+												setShowExport(false);
+											}}
+											className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+										>
+											📄 Export CSV
+										</button>
+										<button
+											onClick={() => {
+												exportPDF(filteredData, periode);
+												setShowExport(false);
+											}}
+											className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+										>
+											🖨️ Export PDF
+										</button>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
 
-			{/* ── Tren chart ── */}
-			<TrenChart data={filteredData} />
+					{/* ── Summary cards ── */}
+					<SummaryCards data={filteredData} />
 
-			{/* ── Komparasi bulan ke bulan ── */}
-			<KomparasiBulan data={filteredData} />
+					{/* ── Tren chart ── */}
+					<TrenChart data={filteredData} />
+
+					{/* ── Komparasi bulan ke bulan ── */}
+					<KomparasiBulan data={filteredData} />
+				</>
+			)}
 		</div>
 	);
 }
