@@ -1,62 +1,100 @@
-import { useState, useMemo } from 'react'
-import { laporanBulanan, buildLaporanData, filterByPeriode } from '../Data/laporanData'
-import { PeriodeSelector, SummaryCards, formatRp } from '../components/laporan/LaporanSummary'
-import TrenChart from '../components/laporan/TrenChart'
-import KomparasiBulan from '../components/laporan/KomparasiBulan'
+import { useState, useMemo, useEffect } from "react";
+import {
+	laporanBulanan,
+	buildLaporanData,
+	filterByPeriode,
+} from "../Data/laporanData";
+import {
+	PeriodeSelector,
+	SummaryCards,
+	formatRp,
+} from "../components/laporan/LaporanSummary";
+import TrenChart from "../components/laporan/TrenChart";
+import KomparasiBulan from "../components/laporan/KomparasiBulan";
+import { transaksiApi } from "../lib/api";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const DownloadIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
-  </svg>
-)
+	<svg
+		width="14"
+		height="14"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+	>
+		<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+		<polyline points="7,10 12,15 17,10" />
+		<line x1="12" y1="15" x2="12" y2="3" />
+	</svg>
+);
 
 // ─── Export helpers ───────────────────────────────────────────────────────────
 function exportCSV(data, periode) {
-  const header = ['Bulan', 'Pemasukan', 'Pengeluaran', 'Tabungan', '% Pemasukan', '% Pengeluaran', '% Tabungan']
-  const rows = data.map(d => [
-    d.bulan,
-    d.pemasukan,
-    d.pengeluaran,
-    d.tabungan,
-    d.pctPemasukan   ?? '-',
-    d.pctPengeluaran ?? '-',
-    d.pctTabungan    ?? '-',
-  ])
-  const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url  = URL.createObjectURL(blob)
-  const a    = document.createElement('a')
-  a.href     = url
-  a.download = `laporan_${periode}_${new Date().toISOString().split('T')[0]}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+	const header = [
+		"Bulan",
+		"Pemasukan",
+		"Pengeluaran",
+		"Tabungan",
+		"% Pemasukan",
+		"% Pengeluaran",
+		"% Tabungan",
+	];
+	const rows = data.map((d) => [
+		d.bulan,
+		d.pemasukan,
+		d.pengeluaran,
+		d.tabungan,
+		d.pctPemasukan ?? "-",
+		d.pctPengeluaran ?? "-",
+		d.pctTabungan ?? "-",
+	]);
+	const csv = [header, ...rows]
+		.map((r) => r.map((c) => `"${c}"`).join(","))
+		.join("\n");
+	const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `laporan_${periode}_${new Date().toISOString().split("T")[0]}.csv`;
+	a.click();
+	URL.revokeObjectURL(url);
 }
 
 function exportPDF(data, periode) {
-  const totalMasuk  = data.reduce((s, d) => s + d.pemasukan,   0)
-  const totalKeluar = data.reduce((s, d) => s + d.pengeluaran, 0)
-  const totalSaldo  = totalMasuk - totalKeluar
+	const totalMasuk = data.reduce((s, d) => s + d.pemasukan, 0);
+	const totalKeluar = data.reduce((s, d) => s + d.pengeluaran, 0);
+	const totalSaldo = totalMasuk - totalKeluar;
 
-  const rows = data.map(d => {
-    const rasio = d.pemasukan > 0 ? Math.round((d.tabungan / d.pemasukan) * 100) : 0
-    const pct = (val) => val === null ? '—' : (val >= 0 ? '▲ ' : '▼ ') + Math.abs(val) + '%'
-    return `
+	const rows = data
+		.map((d) => {
+			const rasio =
+				d.pemasukan > 0 ? Math.round((d.tabungan / d.pemasukan) * 100) : 0;
+			const pct = (val) =>
+				val === null ? "—" : (val >= 0 ? "▲ " : "▼ ") + Math.abs(val) + "%";
+			return `
       <tr>
         <td><strong>${d.bulan}</strong></td>
         <td style="color:#10B981">${formatRp(d.pemasukan)}</td>
-        <td style="color:${d.pctPemasukan >= 0 ? '#10B981' : '#F87171'};font-size:11px">${pct(d.pctPemasukan)}</td>
+        <td style="color:${d.pctPemasukan >= 0 ? "#10B981" : "#F87171"};font-size:11px">${pct(d.pctPemasukan)}</td>
         <td style="color:#F87171">${formatRp(d.pengeluaran)}</td>
-        <td style="color:${d.pctPengeluaran >= 0 ? '#10B981' : '#F87171'};font-size:11px">${pct(d.pctPengeluaran)}</td>
+        <td style="color:${d.pctPengeluaran >= 0 ? "#10B981" : "#F87171"};font-size:11px">${pct(d.pctPengeluaran)}</td>
         <td style="color:#A78BFA;font-weight:600">${formatRp(d.tabungan)}</td>
-        <td style="color:${d.pctTabungan >= 0 ? '#10B981' : '#F87171'};font-size:11px">${pct(d.pctTabungan)}</td>
-        <td style="color:${rasio >= 30 ? '#10B981' : rasio >= 15 ? '#F59E0B' : '#F87171'}">${rasio}%</td>
-      </tr>`
-  }).join('')
+        <td style="color:${d.pctTabungan >= 0 ? "#10B981" : "#F87171"};font-size:11px">${pct(d.pctTabungan)}</td>
+        <td style="color:${rasio >= 30 ? "#10B981" : rasio >= 15 ? "#F59E0B" : "#F87171"}">${rasio}%</td>
+      </tr>`;
+		})
+		.join("");
 
-  const periodeLabel = { 'bulan-ini': 'Bulan Ini', '3-bulan': '3 Bulan Terakhir', 'tahun-ini': 'Tahun Ini' }
+	const periodeLabel = {
+		"bulan-ini": "Bulan Ini",
+		"3-bulan": "3 Bulan Terakhir",
+		"tahun-ini": "Tahun Ini",
+	};
 
-  const html = `<!DOCTYPE html>
+	const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -81,7 +119,7 @@ function exportPDF(data, periode) {
 <body>
   <div class="header">
     <h1>Laporan Keuangan FinTrack</h1>
-    <p>Periode: ${periodeLabel[periode]} · Diekspor ${new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</p>
+    <p>Periode: ${periodeLabel[periode]} · Diekspor ${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</p>
   </div>
   <div class="summary">
     <div class="card"><label>Total Pemasukan</label><div class="val" style="color:#10B981">${formatRp(totalMasuk)}</div></div>
@@ -103,76 +141,176 @@ function exportPDF(data, periode) {
     </tfoot>
   </table>
 </body>
-</html>`
+</html>`;
 
-  const blob = new Blob([html], { type: 'text/html' })
-  const url  = URL.createObjectURL(blob)
-  const win  = window.open(url)
-  win.onload = () => { win.print(); URL.revokeObjectURL(url) }
+	const blob = new Blob([html], { type: "text/html" });
+	const url = URL.createObjectURL(blob);
+	const win = window.open(url);
+	win.onload = () => {
+		win.print();
+		URL.revokeObjectURL(url);
+	};
+}
+
+// ─── Helper: Build report data from transactions ────────────────────────────
+function buildRealLaporanData(transactions) {
+	const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+	
+	// Group transactions by month
+	const monthlyData = {};
+	
+	transactions.forEach(txn => {
+		const date = new Date(txn.tanggal);
+		const month = date.getMonth(); // 0-11
+		const year = date.getFullYear();
+		const key = `${year}-${month}`;
+		
+		if (!monthlyData[key]) {
+			monthlyData[key] = {
+				bulan: monthNames[month],
+				year: year,
+				month: month,
+				pemasukan: 0,
+				pengeluaran: 0,
+			};
+		}
+		
+		if (txn.tipe === 'masuk') {
+			monthlyData[key].pemasukan += txn.jumlah;
+		} else {
+			monthlyData[key].pengeluaran += txn.jumlah;
+		}
+	});
+	
+	// Convert to array and sort by year and month
+	const sorted = Object.values(monthlyData).sort((a, b) => {
+		if (a.year !== b.year) return a.year - b.year;
+		return a.month - b.month;
+	});
+	
+	// Use buildLaporanData to calculate tabungan and percentages
+	return buildLaporanData(sorted);
 }
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function Laporan() {
-  const [periode,     setPeriode]     = useState('tahun-ini')
-  const [showExport,  setShowExport]  = useState(false)
+	const [periode, setPeriode] = useState("tahun-ini");
+	const [showExport, setShowExport] = useState(false);
+	const [transactions, setTransactions] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [reportData, setReportData] = useState([]);
 
-  // Build & filter data
-  const allData      = useMemo(() => buildLaporanData(laporanBulanan), [])
-  const filteredData = useMemo(() => filterByPeriode(allData, periode), [allData, periode])
+	// ── Fetch transactions on mount ──
+	useEffect(() => {
+		const fetchTransactions = async () => {
+			try {
+				setLoading(true);
+				const response = await transaksiApi.getAll();
+				const txnData = response.data || [];
+				setTransactions(txnData);
+				
+				// Build real report data
+				const realData = buildRealLaporanData(txnData);
+				setReportData(realData);
+			} catch (err) {
+				console.error("Failed to fetch transactions:", err);
+				// Fallback to dummy data
+				setReportData(buildLaporanData(laporanBulanan));
+			} finally {
+				setLoading(false);
+			}
+		};
+		fetchTransactions();
+	}, []);
+	
+	// Build & filter data
+	const allData = useMemo(() => reportData, [reportData]);
+	const filteredData = useMemo(
+		() => filterByPeriode(allData, periode),
+		[allData, periode],
+	);
 
-  const periodeLabel = { 'bulan-ini': 'Bulan Ini', '3-bulan': '3 Bulan Terakhir', 'tahun-ini': 'Tahun Ini' }
+	const periodeLabel = {
+		"bulan-ini": "Bulan Ini",
+		"3-bulan": "3 Bulan Terakhir",
+		"tahun-ini": "Tahun Ini",
+	};
 
-  return (
-    <div className="flex flex-col gap-5">
+	return (
+		<div className="flex flex-col gap-5">
+			{loading ? (
+				<div className="flex items-center justify-center py-12">
+					<div className="text-center">
+						<div className="text-slate-400 mb-3">Loading laporan...</div>
+						<div className="animate-spin w-6 h-6 border-2 border-slate-600 border-t-violet-500 rounded-full mx-auto"></div>
+					</div>
+				</div>
+			) : filteredData.length === 0 ? (
+				<div className="flex items-center justify-center py-12">
+					<div className="text-center">
+						<p className="text-slate-400">Belum ada data transaksi</p>
+						<p className="text-slate-600 text-sm mt-1">Mulai catat transaksi untuk melihat laporan</p>
+					</div>
+				</div>
+			) : (
+				<>
+					{/* ── Top bar ── */}
+					<div className="flex items-center justify-between">
+						<div>
+							<h1 className="text-[20px] font-bold text-slate-100 tracking-tight">
+								Laporan Keuangan
+							</h1>
+							<p className="text-[12px] text-slate-500 mt-0.5">
+								{periodeLabel[periode]} · {filteredData.length} bulan data
+							</p>
+						</div>
+						<div className="flex items-center gap-3">
+							<PeriodeSelector value={periode} onChange={(v) => setPeriode(v)} />
 
-      {/* ── Top bar ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[20px] font-bold text-slate-100 tracking-tight">Laporan Keuangan</h1>
-          <p className="text-[12px] text-slate-500 mt-0.5">
-            {periodeLabel[periode]} · {filteredData.length} bulan data
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <PeriodeSelector value={periode} onChange={(v) => setPeriode(v)} />
+							{/* Export dropdown */}
+							<div className="relative">
+								<button
+									onClick={() => setShowExport((e) => !e)}
+									className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] text-slate-400 border border-white/[0.07] hover:text-slate-200 hover:bg-white/[0.04] transition-all duration-200"
+								>
+									<DownloadIcon /> Ekspor ▾
+								</button>
+								{showExport && (
+									<div className="absolute right-0 top-full mt-2 w-44 bg-[#111827] border border-white/[0.08] rounded-xl shadow-2xl py-1.5 z-10">
+										<button
+											onClick={() => {
+												exportCSV(filteredData, periode);
+												setShowExport(false);
+											}}
+											className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+										>
+											📄 Export CSV
+										</button>
+										<button
+											onClick={() => {
+												exportPDF(filteredData, periode);
+												setShowExport(false);
+											}}
+											className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+										>
+											🖨️ Export PDF
+										</button>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
 
-          {/* Export dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowExport(e => !e)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] text-slate-400 border border-white/[0.07] hover:text-slate-200 hover:bg-white/[0.04] transition-all duration-200"
-            >
-              <DownloadIcon /> Ekspor ▾
-            </button>
-            {showExport && (
-              <div className="absolute right-0 top-full mt-2 w-44 bg-[#111827] border border-white/[0.08] rounded-xl shadow-2xl py-1.5 z-10">
-                <button
-                  onClick={() => { exportCSV(filteredData, periode); setShowExport(false) }}
-                  className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
-                >
-                  📄 Export CSV
-                </button>
-                <button
-                  onClick={() => { exportPDF(filteredData, periode); setShowExport(false) }}
-                  className="w-full text-left px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
-                >
-                  🖨️ Export PDF
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+					{/* ── Summary cards ── */}
+					<SummaryCards data={filteredData} />
 
-      {/* ── Summary cards ── */}
-      <SummaryCards data={filteredData} />
+					{/* ── Tren chart ── */}
+					<TrenChart data={filteredData} />
 
-      {/* ── Tren chart ── */}
-      <TrenChart data={filteredData} />
-
-      {/* ── Komparasi bulan ke bulan ── */}
-      <KomparasiBulan data={filteredData} />
-
-    </div>
-  )
+					{/* ── Komparasi bulan ke bulan ── */}
+					<KomparasiBulan data={filteredData} />
+				</>
+			)}
+		</div>
+	);
 }

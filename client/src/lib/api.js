@@ -68,3 +68,8 @@ export const kategoriApi = {
   update: (id, d)  => request(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
   delete: (id)     => request(`/categories/${id}`, { method: 'DELETE' }),
 }
+
+// ─── Dashboard endpoints ──────────────────────────────────────────────────────
+export const dashboardApi = {
+  getSummary: () => request('/dashboard/summary'),
+}

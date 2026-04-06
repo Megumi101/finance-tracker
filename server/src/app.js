@@ -2,6 +2,9 @@
 import express    from 'express'
 import cors       from 'cors'
 import authRoutes from './routes/authRoutes.js'
+import transactionRoutes from './routes/transactionRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import dashboardRoutes from './routes/dashboardRoutes.js'
 
 const app = express()
 
@@ -14,6 +17,9 @@ app.use(express.json())
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes)
+app.use('/api/transactions', transactionRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_, res) => res.json({ status: 'ok', app: 'FinTrack API' }))
