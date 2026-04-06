@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import {
+	BrowserRouter,
+	Routes,
+	Route,
+	Outlet,
+	Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/layouts/Sidebar";
 import Navbar from "./components/layouts/Navbar";
 import Dashboard from "./pages/Dashboard";
-import Transaksi from "./pages/Transaksi";
 import Kategori from "./pages/Kategori";
+import Transaksi from "./pages/Transaksi";
 import Laporan from "./pages/Laporan";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
 
-// Placeholder pages — ganti dengan komponen halaman kamu
 const Page = ({ title }) => (
 	<div className="text-slate-400 text-sm">
 		Halaman <span className="text-violet-400 font-semibold">{title}</span> —
@@ -21,7 +28,7 @@ function AppLayout() {
 	const [collapsed, setCollapsed] = useState(false);
 
 	return (
-		<div className="flex h-screen bg-navy-950 overflow-hidden">
+		<div className="flex h-screen bg-[#080C14] overflow-hidden">
 			<Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
 			<div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 				<Navbar />
@@ -36,21 +43,32 @@ function AppLayout() {
 export default function App() {
 	return (
 		<BrowserRouter>
-			<Routes>
-				{/* Halaman dengan Sidebar + Navbar */}
-				<Route element={<AppLayout />}>
-					<Route path="/" element={<Dashboard />} />
-					<Route path="/transaksi" element={<Transaksi />} />
-					<Route path="/kategori" element={<Kategori />} />
-					<Route path="/laporan" element={<Laporan title="Laporan" />} />
-					<Route path="/filter" element={<Page title="Filter & Ekspor" />} />
-					<Route path="/pengaturan" element={<Page title="Pengaturan" />} />
-				</Route>
+			<AuthProvider>
+				<Routes>
+					{/* Protected — harus login */}
+					<Route
+						element={
+							<ProtectedRoute>
+								<AppLayout />
+							</ProtectedRoute>
+						}
+					>
+						<Route path="/" element={<Dashboard />} />
+						<Route path="/transaksi" element={<Transaksi />} />
+						<Route path="/kategori" element={<Kategori title="Kategori" />} />
+						<Route path="/laporan" element={<Laporan />} />
+						<Route path="/filter" element={<Page title="Filter & Ekspor" />} />
+						<Route path="/pengaturan" element={<Page title="Pengaturan" />} />
+					</Route>
 
-				{/* Halaman tanpa Sidebar + Navbar (auth) */}
-				<Route path="/login" element={<Login title="Login" />} />
-				<Route path="/register" element={<Register title="Register" />} />
-			</Routes>
+					{/* Public — auth pages */}
+					<Route path="/login" element={<Login />} />
+					<Route path="/register" element={<Register title="Register" />} />
+
+					{/* Fallback */}
+					<Route path="*" element={<Navigate to="/" replace />} />
+				</Routes>
+			</AuthProvider>
 		</BrowserRouter>
 	);
 }
