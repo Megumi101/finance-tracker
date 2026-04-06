@@ -1,0 +1,70 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // bisa ganti mysql kalau mau
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  password     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions Transaction[]
+  categories   Category[]
+  budgets      Budget[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  amount      Float
+  type        TransactionType
+  description String?
+  date        DateTime @default(now())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?  // contoh: "#FF5733"
+  icon      String?  // optional icon
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  amount    Float
+  month     Int      // 1 - 12
+  year      Int
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
