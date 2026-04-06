@@ -36,138 +36,169 @@ function formatTanggal(str) {
 }
 
 function Initials({ nama, tipe }) {
-  const letters = nama.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-  return (
-    <div className={`
+	const letters = (nama || "T")
+		.split(" ")
+		.slice(0, 2)
+		.map((w) => w[0])
+		.join("")
+		.toUpperCase();
+	return (
+		<div
+			className={`
       w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0
-      ${tipe === 'masuk' ? 'bg-violet-600/15 text-violet-400' : 'bg-slate-700/40 text-slate-400'}
-    `}>
-      {letters}
-    </div>
-  )
+      ${tipe === "masuk" ? "bg-violet-600/15 text-violet-400" : "bg-slate-700/40 text-slate-400"}
+    `}
+		>
+			{letters}
+		</div>
+	);
 }
 
 const COLS = [
-  { key: 'nama',     label: 'Transaksi' },
-  { key: 'kategori', label: 'Kategori'  },
-  { key: 'tanggal',  label: 'Tanggal'   },
-  { key: 'jumlah',   label: 'Jumlah'    },
-  { key: 'status',   label: 'Status'    },
-]
+	{ key: "nama", label: "Transaksi" },
+	{ key: "kategori", label: "Kategori" },
+	{ key: "tanggal", label: "Tanggal" },
+	{ key: "jumlah", label: "Jumlah" },
+	{ key: "status", label: "Status" },
+];
 
-export default function TransaksiTable({ data, sort, onSort, onEdit, onDelete }) {
-  if (data.length === 0) {
-    return (
-      <div className="bg-[#0C1120] border border-white/[0.06] rounded-2xl p-16 flex flex-col items-center justify-center text-center">
-        <div className="text-4xl mb-3">🔍</div>
-        <p className="text-[14px] font-medium text-slate-400">Tidak ada transaksi ditemukan</p>
-        <p className="text-[12px] text-slate-600 mt-1">Coba ubah filter atau tambah transaksi baru</p>
-      </div>
-    )
-  }
+export default function TransaksiTable({
+	data,
+	sort,
+	onSort,
+	onEdit,
+	onDelete,
+}) {
+	if (data.length === 0) {
+		return (
+			<div className="bg-[#0C1120] border border-white/[0.06] rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+				<div className="text-4xl mb-3">🔍</div>
+				<p className="text-[14px] font-medium text-slate-400">
+					Tidak ada transaksi ditemukan
+				</p>
+				<p className="text-[12px] text-slate-600 mt-1">
+					Coba ubah filter atau tambah transaksi baru
+				</p>
+			</div>
+		);
+	}
 
-  return (
-    <div className="bg-[#0C1120] border border-white/[0.06] rounded-2xl overflow-hidden">
-      <table className="w-full border-collapse">
-        {/* Head */}
-        <thead>
-          <tr className="border-b border-white/[0.05]">
-            {COLS.map(col => (
-              <th
-                key={col.key}
-                onClick={() => onSort(col.key)}
-                className="text-left px-5 py-3.5 cursor-pointer select-none group"
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-medium tracking-[1.2px] uppercase text-slate-600 group-hover:text-slate-400 transition-colors">
-                    {col.label}
-                  </span>
-                  <span className={`transition-colors ${sort.key === col.key ? 'text-violet-400' : 'text-slate-700 group-hover:text-slate-500'}`}>
-                    <SortIcon dir={sort.key === col.key ? sort.dir : null} />
-                  </span>
-                </div>
-              </th>
-            ))}
-            <th className="px-5 py-3.5 text-right">
-              <span className="text-[10px] font-medium tracking-[1.2px] uppercase text-slate-600">Aksi</span>
-            </th>
-          </tr>
-        </thead>
+	return (
+		<div className="bg-[#0C1120] border border-white/[0.06] rounded-2xl overflow-hidden">
+			<table className="w-full border-collapse">
+				{/* Head */}
+				<thead>
+					<tr className="border-b border-white/[0.05]">
+						{COLS.map((col) => (
+							<th
+								key={col.key}
+								onClick={() => onSort(col.key)}
+								className="text-left px-5 py-3.5 cursor-pointer select-none group"
+							>
+								<div className="flex items-center gap-1.5">
+									<span className="text-[10px] font-medium tracking-[1.2px] uppercase text-slate-600 group-hover:text-slate-400 transition-colors">
+										{col.label}
+									</span>
+									<span
+										className={`transition-colors ${sort.key === col.key ? "text-violet-400" : "text-slate-700 group-hover:text-slate-500"}`}
+									>
+										<SortIcon dir={sort.key === col.key ? sort.dir : null} />
+									</span>
+								</div>
+							</th>
+						))}
+						<th className="px-5 py-3.5 text-right">
+							<span className="text-[10px] font-medium tracking-[1.2px] uppercase text-slate-600">
+								Aksi
+							</span>
+						</th>
+					</tr>
+				</thead>
 
-        {/* Body */}
-        <tbody className="divide-y divide-white/[0.04]">
-          {data.map(txn => {
-            const status = STATUS_MAP[txn.status]
-            const isPos  = txn.tipe === 'masuk'
+				{/* Body */}
+				<tbody className="divide-y divide-white/[0.04]">
+					{data.map((txn) => {
+						const status = STATUS_MAP[txn.status] || STATUS_MAP["berhasil"]; // Default to 'berhasil' if undefined
+						const isPos = txn.tipe === "masuk";
 
-            return (
-              <tr
-                key={txn.id}
-                className="hover:bg-white/[0.02] transition-colors duration-150 group"
-              >
-                {/* Nama */}
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <Initials nama={txn.nama} tipe={txn.tipe} />
-                    <div>
-                      <p className="text-[13px] font-medium text-slate-200">{txn.nama}</p>
-                      {txn.catatan && (
-                        <p className="text-[11px] text-slate-600 mt-0.5 truncate max-w-[160px]">{txn.catatan}</p>
-                      )}
-                    </div>
-                  </div>
-                </td>
+						return (
+							<tr
+								key={txn.id}
+								className="hover:bg-white/[0.02] transition-colors duration-150 group"
+							>
+								{/* Nama */}
+								<td className="px-5 py-4">
+									<div className="flex items-center gap-3">
+										<Initials nama={txn.nama} tipe={txn.tipe} />
+										<div>
+											<p className="text-[13px] font-medium text-slate-200">
+												{txn.nama}
+											</p>
+											{txn.catatan && (
+												<p className="text-[11px] text-slate-600 mt-0.5 truncate max-w-[160px]">
+													{txn.catatan}
+												</p>
+											)}
+										</div>
+									</div>
+								</td>
 
-                {/* Kategori */}
-                <td className="px-5 py-4">
-                  <span className="text-[12px] text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-lg">
-                    {txn.kategori}
-                  </span>
-                </td>
+								{/* Kategori */}
+								<td className="px-5 py-4">
+									<span className="text-[12px] text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-lg">
+										{txn.kategori}
+									</span>
+								</td>
 
-                {/* Tanggal */}
-                <td className="px-5 py-4">
-                  <span className="text-[12px] text-slate-500">{formatTanggal(txn.tanggal)}</span>
-                </td>
+								{/* Tanggal */}
+								<td className="px-5 py-4">
+									<span className="text-[12px] text-slate-500">
+										{formatTanggal(txn.tanggal)}
+									</span>
+								</td>
 
-                {/* Jumlah */}
-                <td className="px-5 py-4">
-                  <span className={`text-[13px] font-mono font-bold ${isPos ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {formatRupiah(isPos ? txn.jumlah : -txn.jumlah)}
-                  </span>
-                </td>
+								{/* Jumlah */}
+								<td className="px-5 py-4">
+									<span
+										className={`text-[13px] font-mono font-bold ${isPos ? "text-emerald-400" : "text-red-400"}`}
+									>
+										{formatRupiah(isPos ? txn.jumlah : -txn.jumlah)}
+									</span>
+								</td>
 
-                {/* Status */}
-                <td className="px-5 py-4">
-                  <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${status.cls}`}>
-                    {status.label}
-                  </span>
-                </td>
+								{/* Status */}
+								<td className="px-5 py-4">
+									<span
+										className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${status.cls}`}
+									>
+										{status.label}
+									</span>
+								</td>
 
-                {/* Aksi */}
-                <td className="px-5 py-4">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                    <button
-                      onClick={() => onEdit(txn)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-all duration-150"
-                      title="Edit"
-                    >
-                      <EditIcon />
-                    </button>
-                    <button
-                      onClick={() => onDelete(txn)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"
-                      title="Hapus"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
+								{/* Aksi */}
+								<td className="px-5 py-4">
+									<div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+										<button
+											onClick={() => onEdit(txn)}
+											className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-all duration-150"
+											title="Edit"
+										>
+											<EditIcon />
+										</button>
+										<button
+											onClick={() => onDelete(txn)}
+											className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"
+											title="Hapus"
+										>
+											<TrashIcon />
+										</button>
+									</div>
+								</td>
+							</tr>
+						);
+					})}
+				</tbody>
+			</table>
+		</div>
+	);
 }

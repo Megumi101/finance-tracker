@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react'
 import MetricCard, { formatRupiah } from '../components/dashboard/MetricCard'
 import FinanceChart from '../components/dashboard/FinanceChart'
 import CategorySummary from '../components/dashboard/CategorySummary'
 import RecentTransactions from '../components/dashboard/RecentTransaction'
 import { summaryMetrics } from '../data/dashboardData'
+import { dashboardApi } from '../lib/api'
 
 const METRIC_CARDS = [
   {
@@ -40,6 +42,36 @@ const METRIC_CARDS = [
 ]
 
 export default function Dashboard() {
+  const [metrics, setMetrics] = useState(summaryMetrics)
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // ── Fetch dashboard data on mount ──
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        const response = await dashboardApi.getSummary()
+        if (response.data) {
+          setMetrics({
+            ...response.data.summaryMetrics,
+            perubahan: summaryMetrics.perubahan, // keep default perubahan for now
+          })
+          setCategories(response.data.categories || [])
+        }
+        setError(null)
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err)
+        setError(err.message)
+        // Keep using default data on error
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDashboardData()
+  }, [])
+
   return (
     <div className="flex flex-col gap-6">
 
@@ -49,8 +81,8 @@ export default function Dashboard() {
           <MetricCard
             key={card.key}
             label={card.label}
-            value={summaryMetrics[card.key]}
-            perubahan={summaryMetrics.perubahan[card.perubahanKey]}
+            value={metrics[card.key]}
+            perubahan={metrics.perubahan?.[card.perubahanKey] || 0}
             icon={card.icon}
             accentColor={card.accentColor}
             bgColor={card.bgColor}
