@@ -128,6 +128,7 @@ const NAV_MAIN = [
 
 const NAV_OTHER = [
 	{ label: "Filter & Ekspor", icon: "filter", to: "/filter" },
+	{ label: "Profil", icon: "dashboard", to: "/profile" },
 	{ label: "Pengaturan", icon: "settings", to: "/pengaturan" },
 ];
 

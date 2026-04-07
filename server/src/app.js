@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes.js'
 import transactionRoutes from './routes/transactionRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import dashboardRoutes from './routes/dashboardRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/transactions', transactionRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/users', userRoutes)
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_, res) => res.json({ status: 'ok', app: 'FinTrack API' }))

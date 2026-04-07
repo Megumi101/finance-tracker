@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useTheme } from "../../hooks/useTheme";
 import { authApi } from "../../lib/api";
 
 // ─── Page title map ───────────────────────────────────────────────────────────
@@ -9,11 +10,12 @@ const PAGE_META = {
 	"/transaksi": { title: "Transaksi", sub: "Kelola semua transaksi kamu" },
 	"/kategori": { title: "Kategori", sub: "Atur kategori keuangan" },
 	"/laporan": { title: "Laporan", sub: "Ekspor & analisis laporan" },
+	"/profile": { title: "Profil", sub: "Kelola informasi akun Anda" },
+	"/pengaturan": { title: "Pengaturan", sub: "Konfigurasi akun & preferensi" },
 	"/filter": {
 		title: "Filter & Ekspor",
 		sub: "Saring data berdasarkan kriteria",
 	},
-	"/pengaturan": { title: "Pengaturan", sub: "Konfigurasi akun & preferensi" },
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -109,6 +111,38 @@ const UserIcon = () => (
 		<circle cx="12" cy="7" r="4" />
 	</svg>
 );
+const MoonIcon = () => (
+	<svg
+		width="14"
+		height="14"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+	>
+		<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+	</svg>
+);
+const SunIcon = () => (
+	<svg
+		width="14"
+		height="14"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+	>
+		<circle cx="12" cy="12" r="5" />
+		<line x1="12" y1="1" x2="12" y2="3" />
+		<line x1="12" y1="21" x2="12" y2="23" />
+		<line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+		<line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+		<line x1="1" y1="12" x2="3" y2="12" />
+		<line x1="21" y1="12" x2="23" y2="12" />
+		<line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+		<line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+	</svg>
+);
 
 // ─── Notification dummy data ───────────────────────────────────────────────────
 const NOTIFS = [
@@ -148,6 +182,7 @@ export default function Navbar() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { user: authUser, logout } = useAuth();
+	const { theme, toggleTheme } = useTheme();
 	const meta = PAGE_META[location.pathname] ?? { title: "FinTrack", sub: "" };
 
 	const [searchFocused, setSearchFocused] = useState(false);
@@ -256,6 +291,20 @@ export default function Navbar() {
 						</button>
 					)}
 				</div>
+
+				{/* Theme Toggle */}
+				<button
+					onClick={toggleTheme}
+					className="
+            w-9 h-9 rounded-lg flex items-center justify-center
+            bg-[#0F1829] border border-white/[0.07]
+            text-slate-400 hover:text-slate-200
+            hover:border-white/[0.12] transition-all duration-200
+          "
+					title={theme === "dark" ? "Mode Terang" : "Mode Gelap"}
+				>
+					{theme === "dark" ? <SunIcon /> : <MoonIcon />}
+				</button>
 
 				{/* Period Picker */}
 				<div ref={periodRef} className="relative">
@@ -441,7 +490,14 @@ export default function Navbar() {
 							</div>
 							{/* Menu items */}
 							<div className="py-1.5">
-								<ProfileMenuItem icon={<UserIcon />} label="Profil Saya" />
+								<ProfileMenuItem
+									icon={<UserIcon />}
+									label="Profil Saya"
+									onClick={() => {
+										navigate("/profile");
+										setShowProfile(false);
+									}}
+								/>
 								<ProfileMenuItem
 									icon={
 										<svg
@@ -459,6 +515,10 @@ export default function Navbar() {
 										</svg>
 									}
 									label="Pengaturan"
+									onClick={() => {
+										navigate("/pengaturan");
+										setShowProfile(false);
+									}}
 								/>
 							</div>
 							<div className="border-t border-white/[0.06] py-1.5">

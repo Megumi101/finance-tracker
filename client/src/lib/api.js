@@ -73,3 +73,11 @@ export const kategoriApi = {
 export const dashboardApi = {
   getSummary: () => request('/dashboard/summary'),
 }
+
+// ─── User endpoints (Profile & Settings) ─────────────────────────────────────
+export const userApi = {
+  getProfile:     ()       => request('/users/profile'),
+  updateProfile:  (data)   => request('/users/profile', { method: 'PUT', body: JSON.stringify(data) }),
+  getSettings:    ()       => request('/users/settings'),
+  updateSettings: (data)   => request('/users/settings', { method: 'PUT', body: JSON.stringify(data) }),
+}
