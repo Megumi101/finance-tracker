@@ -103,7 +103,7 @@ finance-tracker/
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-username/finance-tracker.git
+git clone https://github.com/Megumi101/finance-tracker.git
 cd finance-tracker
 ```
 
@@ -223,7 +223,7 @@ npm run dev
 ## 👤 Author
 
 **Your Name**
-GitHub: https://github.com/Chiiaa
+GitHub: https://github.com/Megumi101
 GitHub: https://github.com/AdityaYsf
 
 ---
