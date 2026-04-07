@@ -72,6 +72,14 @@ export const deleteCategory = async (userId, id) => {
 }
 
 export const getCategoryStats = async (userId) => {
-  const stats = await categoryRepository.getCategoryStats(userId)
-  return stats.map(transformCategory)
+  try {
+		const stats = await categoryRepository.getCategoryStats(userId);
+		return stats;
+	} catch (err) {
+		const error = new Error(
+			"Gagal mengambil statistik kategori: " + err.message,
+		);
+		error.statusCode = 500;
+		throw error;
+	}
 }

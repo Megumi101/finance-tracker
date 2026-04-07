@@ -76,15 +76,23 @@ export const deleteCategory = async (id, userId) => {
 }
 
 export const getCategoryStats = async (userId) => {
-  return prisma.category.findMany({
-    where: { userId },
-    include: {
-      transactions: {
-        select: {
-          amount: true,
-          type: true,
-        },
-      },
-    },
-  })
+  const categories = await prisma.category.findMany({
+		where: { userId },
+		include: {
+			transactions: {
+				select: {
+					id: true,
+					amount: true,
+					type: true,
+				},
+			},
+		},
+		orderBy: { createdAt: "desc" },
+	});
+
+	// Ensure each category has default color if not set
+	return categories.map((cat) => ({
+		...cat,
+		color: cat.color || "#8B5CF6", // Purple as default
+	}));
 }

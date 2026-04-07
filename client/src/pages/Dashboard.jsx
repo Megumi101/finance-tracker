@@ -4,7 +4,7 @@ import FinanceChart from '../components/dashboard/FinanceChart'
 import CategorySummary from '../components/dashboard/CategorySummary'
 import RecentTransactions from '../components/dashboard/RecentTransaction'
 import { summaryMetrics, dataChart } from "../data/dashboardData";
-import { dashboardApi, transaksiApi } from "../lib/api";
+import { dashboardApi, transaksiApi, kategoriApi } from "../lib/api";
 
 const METRIC_CARDS = [
 	{
@@ -117,14 +117,13 @@ export default function Dashboard() {
 			try {
 				setLoading(true);
 
-				// Fetch summary metrics and categories
+				// Fetch summary metrics
 				const summaryResponse = await dashboardApi.getSummary();
 				if (summaryResponse.data) {
 					setMetrics({
 						...summaryResponse.data.summaryMetrics,
 						perubahan: summaryMetrics.perubahan,
 					});
-					setCategories(summaryResponse.data.categories || []);
 				}
 
 				// Fetch transactions for chart and recent transactions
@@ -171,6 +170,53 @@ export default function Dashboard() {
 					}));
 				}
 
+				// Fetch kategori stats with transaction totals
+				try {
+					const kategoriResponse = await kategoriApi.getStats();
+					if (kategoriResponse.data && Array.isArray(kategoriResponse.data)) {
+						// Calculate total expenses per category and format for display
+						const formattedCategories = kategoriResponse.data
+							.map((cat) => {
+								// Count transactions and sum amount for this category (expenses only)
+								const categoryTransactions = cat.transactions || [];
+								const totalAmount = categoryTransactions
+									.filter((t) => t.type === "EXPENSE")
+									.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+								return {
+									id: cat.id,
+									nama: cat.name,
+									emoji: cat.icon,
+									warna: cat.color || "#8B5CF6",
+									jumlah: totalAmount,
+									transaksi: categoryTransactions.filter(
+										(t) => t.type === "EXPENSE",
+									).length,
+									persen: 0, // Will be calculated below
+								};
+							})
+							.filter((cat) => cat.jumlah > 0); // Only show categories with expenses
+
+						// Calculate percentage
+						const totalExpenses = formattedCategories.reduce(
+							(sum, cat) => sum + cat.jumlah,
+							0,
+						);
+						const categoriesWithPercent = formattedCategories.map((cat) => ({
+							...cat,
+							persen:
+								totalExpenses > 0
+									? Math.round((cat.jumlah / totalExpenses) * 100)
+									: 0,
+						}));
+
+						setCategories(categoriesWithPercent);
+					}
+				} catch (err) {
+					console.error("Failed to fetch category stats:", err);
+					setCategories([]);
+				}
+
 				setError(null);
 			} catch (err) {
 				console.error("Failed to fetch dashboard data:", err);
@@ -203,7 +249,7 @@ export default function Dashboard() {
 			{/* ── Chart + Category ── */}
 			<div className="grid grid-cols-[1fr_360px] gap-4">
 				<FinanceChart chartData={chartData} />
-				<CategorySummary />
+				<CategorySummary categories={categories} />
 			</div>
 
 			{/* ── Recent Transactions ── */}
