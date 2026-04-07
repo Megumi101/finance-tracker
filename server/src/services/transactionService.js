@@ -31,73 +31,106 @@ export const getTransaction = async (id, userId) => {
   return transformTransaction(transaction)
 }
 
-export const createTransaction = async (userId, { nama, jumlah, tipe, deskripsi, tanggal, kategori }) => {
-  try {
-    // Validasi categoryId jika ada - cari kategori dengan userId 
-    let categoryId = null
-    if (kategori) {
-      const category = await prisma.category.findFirst({
-        where: { 
-          id: kategori,
-          userId: userId // Pastikan kategori milik user ini
-        },
-      })
-      
-      if (category) {
-        categoryId = kategori
-      }
-      // Jika kategori tidak ditemukan, categoryId tetap null (transaksi tetap bisa dibuat tanpa kategori)
-    }
+export const createTransaction = async (
+	userId,
+	{ nama, jumlah, tipe, deskripsi, tanggal, kategori },
+) => {
+	try {
+		// Validasi categoryId jika ada - cari kategori dengan userId
+		let categoryId = null;
+		if (kategori) {
+			// Cari kategori by ID (jika kategori adalah ID)
+			let category = await prisma.category.findFirst({
+				where: {
+					id: kategori,
+					userId: userId, // Pastikan kategori milik user ini
+				},
+			});
 
-    const transaction = await transactionRepository.createTransaction(userId, {
-      amount: jumlah,
-      type: tipe === 'masuk' ? 'INCOME' : 'EXPENSE',
-      description: deskripsi,
-      date: tanggal,
-      categoryId: categoryId,
-    })
+			// Jika tidak ketemu by ID, cari by name
+			if (!category) {
+				category = await prisma.category.findFirst({
+					where: {
+						name: kategori,
+						userId: userId,
+					},
+				});
+			}
 
-    return transformTransaction(transaction)
-  } catch (err) {
-    const error = new Error('Gagal membuat transaksi: ' + err.message)
-    error.statusCode = err.statusCode || 400
-    throw error
-  }
-}
+			if (category) {
+				categoryId = category.id;
+			}
+			// Jika kategori tidak ditemukan, categoryId tetap null (transaksi tetap bisa dibuat tanpa kategori)
+		}
 
-export const updateTransaction = async (userId, id, { nama, jumlah, tipe, deskripsi, tanggal, kategori }) => {
-  try {
-    // Validasi categoryId jika ada - cari kategori dengan userId 
-    let categoryId = null
-    if (kategori) {
-      const category = await prisma.category.findFirst({
-        where: { 
-          id: kategori,
-          userId: userId // Pastikan kategori milik user ini
-        },
-      })
-      
-      if (category) {
-        categoryId = kategori
-      }
-      // Jika kategori tidak ditemukan, categoryId tetap null
-    }
+		const transaction = await transactionRepository.createTransaction(userId, {
+			amount: jumlah,
+			type: tipe === "masuk" ? "INCOME" : "EXPENSE",
+			description: deskripsi || nama,
+			date: tanggal,
+			categoryId: categoryId,
+		});
 
-    const transaction = await transactionRepository.updateTransaction(id, userId, {
-      amount: jumlah,
-      type: tipe === 'masuk' ? 'INCOME' : 'EXPENSE',
-      description: deskripsi,
-      date: tanggal,
-      categoryId: categoryId,
-    })
+		return transformTransaction(transaction);
+	} catch (err) {
+		const error = new Error("Gagal membuat transaksi: " + err.message);
+		error.statusCode = err.statusCode || 400;
+		throw error;
+	}
+};
 
-    return transformTransaction(transaction)
-  } catch (err) {
-    const error = new Error('Gagal mengupdate transaksi: ' + err.message)
-    error.statusCode = err.statusCode || 400
-    throw error
-  }
-}
+export const updateTransaction = async (
+	userId,
+	id,
+	{ nama, jumlah, tipe, deskripsi, tanggal, kategori },
+) => {
+	try {
+		// Validasi categoryId jika ada - cari kategori dengan userId
+		let categoryId = null;
+		if (kategori) {
+			// Cari kategori by ID (jika kategori adalah ID)
+			let category = await prisma.category.findFirst({
+				where: {
+					id: kategori,
+					userId: userId, // Pastikan kategori milik user ini
+				},
+			});
+
+			// Jika tidak ketemu by ID, cari by name
+			if (!category) {
+				category = await prisma.category.findFirst({
+					where: {
+						name: kategori,
+						userId: userId,
+					},
+				});
+			}
+
+			if (category) {
+				categoryId = category.id;
+			}
+			// Jika kategori tidak ditemukan, categoryId tetap null
+		}
+
+		const transaction = await transactionRepository.updateTransaction(
+			id,
+			userId,
+			{
+				amount: jumlah,
+				type: tipe === "masuk" ? "INCOME" : "EXPENSE",
+				description: deskripsi || nama,
+				date: tanggal,
+				categoryId: categoryId,
+			},
+		);
+
+		return transformTransaction(transaction);
+	} catch (err) {
+		const error = new Error("Gagal mengupdate transaksi: " + err.message);
+		error.statusCode = err.statusCode || 400;
+		throw error;
+	}
+};
 
 export const deleteTransaction = async (userId, id) => {
   try {
