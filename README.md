@@ -198,7 +198,7 @@ npm run dev
 
 ## 📸 Screenshots
 
-> Add your application screenshots here
+> 
 
 ---
 
@@ -223,7 +223,8 @@ npm run dev
 ## 👤 Author
 
 **Your Name**
-GitHub: https://github.com/your-username
+GitHub: https://github.com/Chiiaa
+GitHub: https://github.com/AdityaYsf
 
 ---
 
