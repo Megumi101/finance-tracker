@@ -63,11 +63,14 @@ export const transaksiApi = {
 
 // ─── Kategori endpoints (siap dipakai nanti) ──────────────────────────────────
 export const kategoriApi = {
-  getAll: ()       => request('/categories'),
-  create: (data)   => request('/categories', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, d)  => request(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
-  delete: (id)     => request(`/categories/${id}`, { method: 'DELETE' }),
-}
+	getAll: () => request("/categories"),
+	getStats: () => request("/categories/stats/summary"),
+	create: (data) =>
+		request("/categories", { method: "POST", body: JSON.stringify(data) }),
+	update: (id, d) =>
+		request(`/categories/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+	delete: (id) => request(`/categories/${id}`, { method: "DELETE" }),
+};
 
 // ─── Dashboard endpoints ──────────────────────────────────────────────────────
 export const dashboardApi = {
